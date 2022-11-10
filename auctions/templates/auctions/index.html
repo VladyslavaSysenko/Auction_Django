@@ -1,0 +1,73 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% load templatetag %}
+
+{% block body %}
+    <h2>{{title}}</h2>
+
+    {% for listing in listings %}
+        <!-- show listing -->
+        <div id="listing">
+            <div id="listing_image">
+                <img src="{{ listing.picture_url }}">
+            </div>
+            <div id="listing_text">
+                {% if listing.activity == "C" %}
+                    <div style="float: left; margin-right:10px"><a href="{% url 'listing_page' listing.id %}">{{ listing.title }}</a></div>
+                    <div id="closed">[Closed]</div>
+                {% else %}
+                <div><a href="{% url 'listing_page' listing.id %}">{{ listing.title }}</a></div>
+                {% endif %}
+                <div id="description">{{ listing.description }}</div>
+                {% if listing.current_price == 0 %}
+                    Starting bid: {{ listing.start_price | usd }}<br>
+                {% else %}
+                    Current bid: {{ listing.current_price | usd}}<br>
+                {% endif %}
+                Category: {{ listing.category }}<br>
+                <div id="created">
+                    Created {{ listing.date_time }}
+                </div>
+                <!-- add/delete from watchlist -->
+                {% if user.is_authenticated %}
+                <div id="text_{{listing.id}}">
+                    <button id="button_{{listing.id}}" onclick="Add_delete('{{ listing.id }}')" type="submit"  class="btn btn-info add">Add to watchlist</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+        <script>
+            id = '{{ listing.id }}'
+            if ("{{ listing.watchlist.all.values |watch:user.id }}" == 1) {
+                $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info delete">Delete from watchlist</button></div>`)
+        }
+
+        function Add_delete(id){
+            $.ajax({
+                url:'watchlist',
+                data: {listing:id,
+                csrfmiddlewaretoken: '{{ csrf_token }}'},
+                type: "POST"
+            }).done(function(request){
+                    id = id.toString();
+                    if ($(`#button_${id}`).html() == "Add to watchlist") {
+                            $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info delete">Delete from watchlist</button></div>`)
+                    }
+                    else {
+                        $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info add">Add to watchlist</button></div>`)
+                    }
+                });
+        }
+        </script>
+    {% endfor %}
+
+    
+
+    {% if listings|length == 0 %}
+        Nothing here
+    {% endif %}
+{% endblock %}

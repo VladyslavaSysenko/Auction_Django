@@ -1,0 +1,162 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Listing page{% endblock %}
+
+{% load templatetag %}
+
+{% block body %}
+    <!-- show the listing -->
+    <div id="page">
+        <div id="picture">
+            <img src="{{ listing.picture_url }}" height="200px">
+        </div>
+
+        <div id="listing_text">
+            <h2>{{ listing.title }}</h2>
+            <div id="description">{{ listing.description }}</div>
+            <div id="price">
+                {% if listing.current_price == 0 %}
+                    Starting bid: {{ listing.start_price | usd }}
+                {% else %}
+                    Current bid: {{ listing.current_price | usd }}
+                {% endif %}
+            </div>
+            Category: {{ listing.category }}<br>
+            Listed by: {{ listing.user_id.username }}
+            <div id="created">
+                Created {{ listing.date_time }}
+            </div>
+
+            <!-- add/delete from watchlist -->
+            {% if user.is_authenticated %}
+                <div id="text_{{listing.id}}">
+                    <button id="button_{{listing.id}}" onclick="Add_delete('{{ listing.id }}')" type="submit" class="btn btn-info add">Add to watchlist</button>
+                </div>
+            
+                <!-- close auction -->
+                {% if not winner %}
+                    <div id="auction">
+                        {% if user.id == listing.user_id.id %}
+                        <form method="post" action = "{% url 'close' %}" autocomplete="off">
+                            {% csrf_token %}    
+                            <input hidden type="text" name="listing_id" value="{{listing.id}}">
+                            <button type="submit" class="btn btn-info">Close the auction</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- delete listing -->
+                <div id="delete">
+                    {% if user.id == listing.user_id.id %}
+                    <form method="post" action = "{% url 'delete' %}" autocomplete="off">
+                        {% csrf_token %}    
+                        <input hidden type="text" name="listing_id" value="{{listing.id}}">
+                        <button type="submit" class="btn btn-info">Delete listing</button>
+                    </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="right">
+            <!-- show the winner -->
+            <div id="winner">
+                {% if winner %}
+                    <h3>
+                    {% if winner == user.username %}
+                        You won the auction!
+                    {% else %}
+                        {{ winner }} won the auction!
+                    </h3>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- make a bid -->
+            <div id="make_bid">
+                {% if user.is_authenticated and user.id != listing.user_id.id and not winner%}
+                    <form method="post" action = "{% url 'listing_page' listing.id %}" autocomplete="off">
+                        {% csrf_token %}    
+                        <input hidden type="text" name="listing" value="{{listing.id}}">
+                        <input class="form-control" type="number" name="bid" required min="0" step="1" placeholder="Bid (only integers)">
+                        <button type="submit" class="btn btn-info">Make a bid</button>
+                    </form>
+                {% elif not winner%}
+                    <h5>Bids</h5>
+                {% endif %}
+            </div>
+
+            <!-- bids -->
+            <div id="bids">
+                {% for bid in listing.bid.all|reverse %}
+                    <div class="line">
+                        <div id="name">{{bid.user_id.username}}</div>
+                        {{bid.price | usd }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- add a comment -->
+            <div id="add_comment">
+                {% if user.is_authenticated %}
+                    <form method="post" action = "{% url 'comment' %}" autocomplete="off" autocapitalize="on">
+                        {% csrf_token %}    
+                        <input hidden type="text" name="listing_id" value="{{listing.id}}">
+                        <input class="form-control" type="text" name="comment" placeholder="Type your comment here" required>
+                        <button type="submit" class="btn btn-info btn">Add a comment</button>
+                    </form>
+                {% else %}
+                <h5>Comments</h5>
+                {% endif %}
+            </div>
+
+            <!-- comments -->
+            <div id="comments">
+                {% for comment in listing.comment.all|reverse %}
+                    <div class="line">
+                        <div id="name">{{comment.user_id.username}}</div>
+                        <div id="date">{{ comment.date_time | local_time }}</div>
+                        <div id="comment">{{comment.comment}}</div>
+                        
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    
+
+
+<script>
+    id = '{{ listing.id }}'
+        if ("{{ listing.watchlist.all.values |watch:user.id }}" == 1) {
+            $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info delete">Delete from watchlist</button></div>`)
+    }
+
+    function Add_delete(id){
+        $.ajax({
+            url:'watchlist',
+            data: {listing:id,
+                csrfmiddlewaretoken: '{{ csrf_token }}'},
+            type: "POST"
+        }).done(function(request){
+            if ($(`#button_${id}`).html() == "Add to watchlist") {
+                $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info delete">Delete from watchlist</button></div>`)
+            }
+            else {
+                $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info add">Add to watchlist</button></div>`)
+            }
+        });
+    }
+
+    setInterval(function() {
+        $("#comments").load(location.href+" #comments>*","");
+        $("#bids").load(location.href+" #bids>*","");
+        $("#price").load(location.href+" #price","");
+        $("#winner").load(location.href+" #winner","");
+    }, 5000);
+    
+</script>
+
+{% endblock %}
