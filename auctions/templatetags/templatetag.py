@@ -18,7 +18,7 @@ def time(value):
 def reverse(value):
     return value[::-1]
 
-# return 1 if listing in watchlist or 0 if not
+# Return 1 if listing in watchlist or 0 if not
 @register.filter(name="watch")
 def watch(watchlist, user_id):
     try:

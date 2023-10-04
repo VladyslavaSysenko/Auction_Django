@@ -5,7 +5,8 @@
 {% load templatetag %}
 
 {% block body %}
-    <!-- show the listing -->
+
+    <!-- Show the listing -->
     <div id="page">
         <div id="picture">
             <img src="{{ listing.picture_url }}" height="200px">
@@ -27,13 +28,13 @@
                 Created {{ listing.date_time }}
             </div>
 
-            <!-- add/delete from watchlist -->
+            <!-- Add/delete from watchlist -->
             {% if user.is_authenticated %}
                 <div id="text_{{listing.id}}">
                     <button id="button_{{listing.id}}" onclick="Add_delete('{{ listing.id }}')" type="submit" class="btn btn-info add">Add to watchlist</button>
                 </div>
             
-                <!-- close auction -->
+                <!-- Close auction -->
                 {% if not winner %}
                     <div id="auction">
                         {% if user.id == listing.user_id.id %}
@@ -46,7 +47,7 @@
                     </div>
                 {% endif %}
 
-                <!-- delete listing -->
+                <!-- Delete listing -->
                 <div id="delete">
                     {% if user.id == listing.user_id.id %}
                     <form method="post" action = "{% url 'delete' %}" autocomplete="off">
@@ -60,7 +61,7 @@
         </div>
 
         <div id="right">
-            <!-- show the winner -->
+            <!-- Show the winner -->
             <div id="winner">
                 {% if winner %}
                     <h3>
@@ -73,7 +74,7 @@
                 {% endif %}
             </div>
 
-            <!-- make a bid -->
+            <!-- Make a bid -->
             <div id="make_bid">
                 {% if user.is_authenticated and user.id != listing.user_id.id and not winner%}
                     <form method="post" action = "{% url 'listing_page' listing.id %}" autocomplete="off">
@@ -87,7 +88,7 @@
                 {% endif %}
             </div>
 
-            <!-- bids -->
+            <!-- Bids -->
             <div id="bids">
                 {% for bid in listing.bid.all|reverse %}
                     <div class="line">
@@ -97,7 +98,7 @@
                 {% endfor %}
             </div>
 
-            <!-- add a comment -->
+            <!-- Add a comment -->
             <div id="add_comment">
                 {% if user.is_authenticated %}
                     <form method="post" action = "{% url 'comment' %}" autocomplete="off" autocapitalize="on">
@@ -111,7 +112,7 @@
                 {% endif %}
             </div>
 
-            <!-- comments -->
+            <!-- Comments -->
             <div id="comments">
                 {% for comment in listing.comment.all|reverse %}
                     <div class="line">

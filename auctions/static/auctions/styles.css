@@ -6,6 +6,7 @@ body {
     font-size:1.02em;
 }
 
+
 /* navigation */
 .nav-link {
     color: #3212c3!important;
@@ -18,7 +19,6 @@ body {
 
 
 /* active listings */
-
 #listing {
     border-bottom: 3px double rgb(114, 214, 241);
     padding: 10px;
@@ -62,8 +62,8 @@ body {
     width: 200px;
 }
 
-/* listing page */
 
+/* listing page */
 .add {
     background-color: rgb(233, 166, 248)!important;
     border-color: rgb(233, 166, 248)!important;
@@ -102,7 +102,6 @@ body {
     overflow-y:auto;
     max-height:40%;
 }
-
 
 #bids, #comments {
     overflow-y:auto;
@@ -174,6 +173,7 @@ body {
     margin: 5px 0;
 }
 
+
 /* categories */
 #category {
     display: block;
@@ -197,6 +197,7 @@ body {
     font-size: 17px;
     
 }
+
 
 /* forms */
 form[id="create"] input, form[id="create"] textarea {
