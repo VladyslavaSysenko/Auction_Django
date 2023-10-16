@@ -1,5 +1,6 @@
 body {
     padding: 10px;
+    background-color: rgb(255, 249, 169)!important;
 }
 
 * {
@@ -9,7 +10,8 @@ body {
 
 /* navigation */
 .nav-link {
-    color: #3212c3!important;
+    color: #1199ed!important;
+    font-weight: bold;
     text-decoration: none!important;
 }
 
@@ -17,6 +19,11 @@ body {
     color: #14084a!important;
 }
 
+h1, h2 {
+    background: -webkit-linear-gradient(#eb2dcc, #3d59fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
 /* active listings */
 #listing {

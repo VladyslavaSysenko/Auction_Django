@@ -1,10 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
 
 from .models import Bid, Comments, User, Listing, Category, Watchlist
 from . import util
@@ -12,34 +11,44 @@ from . import util
 
 # Active listing page (page with all active listings)
 def index(request):
-    return render(request, "auctions/index.html", {
-        "listings": Listing.objects.filter(activity="A"),
-        "title": "Active listings"
-    })
+    return render(
+        request,
+        "auctions/index.html",
+        {"listings": Listing.objects.filter(activity="A"), "title": "Active listings"},
+    )
 
 
 # Show listing page
 def listing_page(request, listing_id, winner=None, error_text=None):
-        # Check if page was not deleted
-        try:
-            # Process bids
-            if request.method == "POST":
-                error_text = bid(request)
-            else:
-                # Show winner if closed
-                if Listing.objects.get(id=listing_id).activity == "C":
-                    try:
-                        winner = Bid.objects.filter(listing_id=Listing.objects.get(id=listing_id)).order_by('-price').first().user_id.username
-                    except AttributeError:
-                        winner = "No one"
-            # Show listing
-            return render(request, "auctions/listing.html", {
-                    "listing": Listing.objects.get(id=listing_id),
-                    "winner": winner,
-                    "error_text": error_text
-                })
-        except Listing.DoesNotExist:
-            return HttpResponseRedirect(reverse("index"))
+    # Check if page was not deleted
+    try:
+        # Process bids
+        if request.method == "POST":
+            error_text = bid(request)
+        else:
+            # Show winner if closed
+            if Listing.objects.get(id=listing_id).activity == "C":
+                try:
+                    winner = (
+                        Bid.objects.filter(listing_id=Listing.objects.get(id=listing_id))
+                        .order_by("-price")
+                        .first()
+                        .user_id.username
+                    )
+                except AttributeError:
+                    winner = "No one"
+        # Show listing
+        return render(
+            request,
+            "auctions/listing.html",
+            {
+                "listing": Listing.objects.get(id=listing_id),
+                "winner": winner,
+                "error_text": error_text,
+            },
+        )
+    except Listing.DoesNotExist:
+        return HttpResponseRedirect(reverse("index"))
 
 
 # Login
@@ -54,9 +63,9 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "auctions/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            return render(
+                request, "auctions/login.html", {"message": "Invalid username and/or password."}
+            )
     else:
         return render(request, "auctions/login.html")
 
@@ -72,21 +81,26 @@ def register(request):
     if request.method == "POST":
         username = request.POST["username"]
         email = request.POST["email"]
-        # Ensure password matches confirmation
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
+        # Ensure username ans password are not empty
+        if not username:
+            return render(
+                request, "auctions/register.html", {"message": "Username cannot be empty."}
+            )
+        if not password:
+            return render(
+                request, "auctions/register.html", {"message": "Password cannot be empty."}
+            )
+        # Ensure password matches confirmation
         if password != confirmation:
-            return render(request, "auctions/register.html", {
-                "message": "Passwords must match."
-            })
+            return render(request, "auctions/register.html", {"message": "Passwords must match."})
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "auctions/register.html", {
-                "message": "Username already taken."
-            })
+            return render(request, "auctions/register.html", {"message": "Username already taken."})
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
@@ -101,10 +115,14 @@ def list_categories(add=None):
         if add.casefold() not in lower_categories:
             categ = Category(name=add.capitalize())
             categ.save()
-    active_categories_id = list(Listing.objects.filter(activity="A").values_list('category', flat=True))
-    active_categories = Category.objects.filter(id__in = active_categories_id).values_list("name", flat=True)
+    active_categories_id = list(
+        Listing.objects.filter(activity="A").values_list("category", flat=True)
+    )
+    active_categories = Category.objects.filter(id__in=active_categories_id).values_list(
+        "name", flat=True
+    )
     print(f"active {active_categories}")
-    return (sorted(active_categories))
+    return sorted(active_categories)
 
 
 # Create listing
@@ -112,50 +130,54 @@ def list_categories(add=None):
 def create_listing(request):
     if request.method == "POST":
         # Check if title, description and bid really provided. If not - logout the user
-        if request.POST['title'] == "" or request.POST['description'] == "" or int(request.POST['start_price']) < 0:
+        if (
+            request.POST["title"] == ""
+            or request.POST["description"] == ""
+            or int(request.POST["start_price"]) < 0
+        ):
             logout(request)
             return HttpResponseRedirect(reverse("index"))
         # If category is empty - No category
-        catg = request.POST['category']
+        catg = request.POST["category"]
         if catg == "":
             catg = "No category"
         # Add category to list of categories if new
         list_categories(catg)
         # Add empty photo if not provided
-        picture = request.POST['picture_url']
+        picture = request.POST["picture_url"]
         if picture == "":
-            picture = "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"
+            picture = "/images/no_image.jpg"
         # Submit creation of listing
         new = Listing(
-            user_id = User.objects.get(id=request.user.id),
-            title = request.POST['title'].capitalize(),
-            description = request.POST['description'].capitalize(),
-            start_price = request.POST['start_price'],
-            picture_url = picture, 
-            category = Category.objects.get(name=catg.capitalize())
-            )
+            user_id=User.objects.get(id=request.user.id),
+            title=request.POST["title"].capitalize(),
+            description=request.POST["description"].capitalize(),
+            start_price=request.POST["start_price"],
+            picture_url=picture,
+            category=Category.objects.get(name=catg.capitalize()),
+        )
         new.save()
         return HttpResponseRedirect(reverse("index"))
     else:
         # Show page where to create the listing
-        return render(request, "auctions/create.html", {
-            "categories": list_categories()
-        })
+        return render(request, "auctions/create.html", {"categories": list_categories()})
 
 
 # Show page with all categories
 def categories(request):
-    return render(request, "auctions/categories.html", {
-            "categories": list_categories()
-        })
+    return render(request, "auctions/categories.html", {"categories": list_categories()})
 
 
 # Show all listings from category
 def category_page(request, category_name):
-    return render(request, "auctions/index.html", {
-        "listings": Category.objects.get(name=category_name).listing.all().filter(activity="A"),
-        "title": f'Category "{category_name}"'
-    })
+    return render(
+        request,
+        "auctions/index.html",
+        {
+            "listings": Category.objects.get(name=category_name).listing.all().filter(activity="A"),
+            "title": f'Category "{category_name}"',
+        },
+    )
 
 
 # Watchlist
@@ -164,29 +186,32 @@ def watchlist(request):
     user_id = request.user.id
     # Add to watchlist
     if request.method == "POST":
-        listing = request.POST['listing']
+        listing = request.POST["listing"]
         user_watchlist = Watchlist.objects.filter(user_id=user_id)
         user_listings = [str(x.listing.id) for x in user_watchlist]
         # Add to watchlist
         if listing not in user_listings:
             new = Watchlist(
-            user_id=User.objects.get(id=user_id),
-            listing = Listing.objects.get(id=listing)
+                user_id=User.objects.get(id=user_id), listing=Listing.objects.get(id=listing)
             )
             new.save()
-            return JsonResponse({"done":"done"})
+            return JsonResponse({"done": "done"})
         # Delete from watchlist
         else:
             delete = Watchlist.objects.get(user_id=user_id, listing=Listing.objects.get(id=listing))
             delete.delete()
-            return JsonResponse({"done":"done"})
+            return JsonResponse({"done": "done"})
     # Show watchlist
     else:
         try:
-            return render(request, "auctions/index.html", {
-                "listings": [x.listing for x in Watchlist.objects.filter(user_id=user_id)],
-                "title": "Watchlist"
-            })
+            return render(
+                request,
+                "auctions/index.html",
+                {
+                    "listings": [x.listing for x in Watchlist.objects.filter(user_id=user_id)],
+                    "title": "Watchlist",
+                },
+            )
         except Watchlist.DoesNotExist:
             # Show empty watchlist
             return render(request, "auctions/index.html", {"title": "Watchlist"})
@@ -195,43 +220,43 @@ def watchlist(request):
 # My listings
 @login_required(login_url="login")
 def my_listings(request):
-    return render(request, "auctions/index.html", {
-                "listings": Listing.objects.filter(user_id=User.objects.get(id=request.user.id)),
-                "title": "My listings"
-            })
-        
+    return render(
+        request,
+        "auctions/index.html",
+        {
+            "listings": Listing.objects.filter(user_id=User.objects.get(id=request.user.id)),
+            "title": "My listings",
+        },
+    )
+
 
 # Add a bid
 @login_required(login_url="login")
 def bid(request):
     if request.method == "POST":
         user_id = User.objects.get(id=request.user.id)
-        listing_id = request.POST['listing']
+        listing_id = request.POST["listing"]
         # If bid not a number
         try:
-            bid = int(request.POST['bid'])
+            bid = int(request.POST["bid"])
         except:
             return util.escape("It's not an integer!")
         # If bid less than starting price
         if bid < int(Listing.objects.get(id=listing_id).start_price):
-            return util.escape('Bid is less than starting price')
+            return util.escape("Bid is less than starting price")
         # If bid less than another bid
         try:
-            if bid <= Bid.objects.filter(listing_id=listing_id).order_by('-price').first().price:
-                return util.escape('Bid is not bigger than existing bid')
+            if bid <= Bid.objects.filter(listing_id=listing_id).order_by("-price").first().price:
+                return util.escape("Bid is not bigger than existing bid")
         except (Bid.DoesNotExist, AttributeError) as error:
             pass
         # Add a bid
-        new = Bid(
-            user_id = user_id,
-            listing_id = Listing.objects.get(id=listing_id),
-            price = bid
-        )
+        new = Bid(user_id=user_id, listing_id=Listing.objects.get(id=listing_id), price=bid)
         new.save()
         # Add current price to the listing
         listing = Listing.objects.get(id=listing_id)
         listing.current_price = bid
-        listing.save() 
+        listing.save()
 
 
 # Make a comment
@@ -239,13 +264,13 @@ def bid(request):
 def comment(request):
     if request.method == "POST":
         new = Comments(
-            user_id = User.objects.get(id=request.user.id),
-            listing_id = Listing.objects.get(id=request.POST['listing_id']),
-            comment = request.POST['comment']
+            user_id=User.objects.get(id=request.user.id),
+            listing_id=Listing.objects.get(id=request.POST["listing_id"]),
+            comment=request.POST["comment"],
         )
         new.save()
         # Return to the listing page
-        return HttpResponseRedirect(reverse("listing_page", args=(request.POST['listing_id'],)))
+        return HttpResponseRedirect(reverse("listing_page", args=(request.POST["listing_id"],)))
 
 
 # Close the auction
@@ -260,7 +285,7 @@ def close(request):
             listing = Listing.objects.get(id=listing_id)
             listing.activity = "C"
             listing.save()
-            return HttpResponseRedirect(reverse("listing_page", args=(request.POST['listing_id'],)))
+            return HttpResponseRedirect(reverse("listing_page", args=(request.POST["listing_id"],)))
 
 
 # Delete the listing
