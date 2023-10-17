@@ -146,7 +146,7 @@ def create_listing(request):
         # Add empty photo if not provided
         picture = request.POST["picture_url"]
         if picture == "":
-            picture = "/images/no_image.jpg"
+            picture = "static/auctions/images/no_image.jpg"
         # Submit creation of listing
         new = Listing(
             user_id=User.objects.get(id=request.user.id),
