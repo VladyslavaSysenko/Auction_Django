@@ -136,6 +136,7 @@
     }
 
     function Add_delete(id){
+        $(`#button_${id}`).css('visibility', 'hidden');
         $.ajax({
             url:'watchlist',
             data: {listing:id,

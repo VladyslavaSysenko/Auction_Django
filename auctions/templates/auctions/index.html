@@ -8,18 +8,31 @@
     <h2>{{title}}</h2>
 
     {% for listing in listings %}
+        
         <!-- Show listing -->
         <div id="listing">
+            <a href="{% url 'listing_page' listing.id %}"></a>
             <div id="listing_image">
                 <img src="{{ listing.picture_url }}">
             </div>
             <div id="listing_text">
-                {% if listing.activity == "C" %}
-                    <div style="float: left; margin-right:10px"><a href="{% url 'listing_page' listing.id %}">{{ listing.title }}</a></div>
-                    <div id="closed">[Closed]</div>
-                {% else %}
-                <div><a href="{% url 'listing_page' listing.id %}">{{ listing.title }}</a></div>
-                {% endif %}
+                <div id="title">
+                    <div id="title_name">
+                        {% if listing.activity == "C" %}
+                            <div style="float: left; margin-right:10px">{{ listing.title }}</div>
+                            <div id="closed">[Closed]</div>
+                        {% else %}
+                            <div>{{ listing.title }}</div>
+                        {% endif %}
+                    </div>
+                    
+                <!-- Add/delete from watchlist -->
+                    {% if user.is_authenticated %}
+                        <div id="text_{{listing.id}}">
+                            <button id="button_{{listing.id}}" onclick="Add_delete('{{ listing.id }}')" type="submit"  class="btn btn-info add">Add to watchlist</button>
+                        </div>
+                    {% endif %}
+                </div>
                 <div id="description">{{ listing.description }}</div>
                 {% if listing.current_price == 0 %}
                     Starting bid: {{ listing.start_price | usd }}<br>
@@ -30,15 +43,8 @@
                 <div id="created">
                     Created {{ listing.date_time }}
                 </div>
-                <!-- Add/delete from watchlist -->
-                {% if user.is_authenticated %}
-                <div id="text_{{listing.id}}">
-                    <button id="button_{{listing.id}}" onclick="Add_delete('{{ listing.id }}')" type="submit"  class="btn btn-info add">Add to watchlist</button>
-                </div>
-                {% endif %}
             </div>
         </div>
-
 
         <script>
             id = '{{ listing.id }}'
@@ -47,6 +53,7 @@
         }
 
         function Add_delete(id){
+            $(`#button_${id}`).css('visibility', 'hidden');
             $.ajax({
                 url:'watchlist',
                 data: {listing:id,
@@ -61,11 +68,10 @@
                         $(`#text_${id}`).replaceWith(`<div id="text_${id}"><button id="button_${id}" onclick="Add_delete(\'${id}\')" type="submit" class="btn btn-info add">Add to watchlist</button></div>`)
                     }
                 });
-        }
+                clickk = 0;
+            }
         </script>
     {% endfor %}
-
-    
 
     {% if listings|length == 0 %}
         Nothing here
