@@ -1,5 +1,5 @@
 body {
-    padding: 10px;
+    padding: 15px;
     background-color: rgb(255, 242, 179)!important;
 }
 
@@ -89,15 +89,19 @@ h1, h2 {
 .add {
     background-color: rgb(233, 166, 248)!important;
     border-color: rgb(233, 166, 248)!important;
-    width: 180px;
+    width: 170px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
     margin: 5px 0;
 }
 
 .delete {
     background-color: rgb(249, 174, 215)!important;
     border-color: rgb(249, 174, 215)!important;
-    width: 180px;
     margin: 5px 0;
+    width: 170px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
 }
 
 #page {
@@ -168,6 +172,8 @@ h1, h2 {
     height: 38px;
     padding: 3px;
     margin: 0 5px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
     border:2px solid rgb(246, 169, 242);
     background-color: rgb(246, 169, 242);
 }
@@ -180,8 +186,11 @@ h1, h2 {
 
 #make_bid button {
     width: 100px;
+    height: 38px;
     padding: 3px;
     margin: 0 5px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
     border:2px solid rgb(246, 169, 242);
     background-color: rgb(246, 169, 242);
 }
@@ -189,14 +198,18 @@ h1, h2 {
 #delete button {
     background-color: #d60505; 
     border-color: #d60505;
-    width: 180px;
+    width: 170px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
     margin: 5px 0;
 }
 
 #auction button {
     background-color: #e20552; 
     border-color: #e20552;
-    width: 180px;
+    width: 170px;
+    font-weight: 500!important;
+    font-size: 0.9rem!important;
     margin: 5px 0;
 }
 

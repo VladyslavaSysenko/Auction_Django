@@ -143,9 +143,13 @@ def create_listing(request):
             catg = "No category"
         # Add category to list of categories if new
         list_categories(catg)
-        # Add empty photo if not provided
+        # Add empty photo if not provided or url is invalid
         picture = request.POST["picture_url"]
-        if picture == "":
+        try:
+            r = request.urlopen(picture)  # response
+            if r.getcode() != 200:
+                picture = "static/auctions/images/no_image.jpg"
+        except:
             picture = "static/auctions/images/no_image.jpg"
         # Submit creation of listing
         new = Listing(
