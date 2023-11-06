@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 from .models import Bid, Comments, User, Listing, Category, Watchlist
 from . import util
+from urllib.request import urlopen
 
 
 # Active listing page (page with all active listings)
@@ -14,7 +15,10 @@ def index(request):
     return render(
         request,
         "auctions/index.html",
-        {"listings": Listing.objects.filter(activity="A"), "title": "Active listings"},
+        {
+            "listings": Listing.objects.filter(activity="A").order_by("-date_time"),
+            "title": "Active listings",
+        },
     )
 
 
@@ -121,7 +125,6 @@ def list_categories(add=None):
     active_categories = Category.objects.filter(id__in=active_categories_id).values_list(
         "name", flat=True
     )
-    print(f"active {active_categories}")
     return sorted(active_categories)
 
 
@@ -146,11 +149,11 @@ def create_listing(request):
         # Add empty photo if not provided or url is invalid
         picture = request.POST["picture_url"]
         try:
-            r = request.urlopen(picture)  # response
+            r = urlopen(picture)  # response
             if r.getcode() != 200:
-                picture = "static/auctions/images/no_image.jpg"
-        except:
-            picture = "static/auctions/images/no_image.jpg"
+                picture = "/static/auctions/images/no_image.jpg"
+        except Exception:
+            picture = "/static/auctions/images/no_image.jpg"
         # Submit creation of listing
         new = Listing(
             user_id=User.objects.get(id=request.user.id),
@@ -178,7 +181,12 @@ def category_page(request, category_name):
         request,
         "auctions/index.html",
         {
-            "listings": Category.objects.get(name=category_name).listing.all().filter(activity="A"),
+            "listings": (
+                Category.objects.get(name=category_name)
+                .listing.all()
+                .filter(activity="A")
+                .order_by("-date_time")
+            ),
             "title": f'Category "{category_name}"',
         },
     )
@@ -212,7 +220,10 @@ def watchlist(request):
                 request,
                 "auctions/index.html",
                 {
-                    "listings": [x.listing for x in Watchlist.objects.filter(user_id=user_id)],
+                    "listings": [
+                        x.listing
+                        for x in Watchlist.objects.filter(user_id=user_id).order_by("-listing_id")
+                    ],
                     "title": "Watchlist",
                 },
             )
@@ -228,7 +239,9 @@ def my_listings(request):
         request,
         "auctions/index.html",
         {
-            "listings": Listing.objects.filter(user_id=User.objects.get(id=request.user.id)),
+            "listings": Listing.objects.filter(
+                user_id=User.objects.get(id=request.user.id)
+            ).order_by("-date_time"),
             "title": "My listings",
         },
     )
